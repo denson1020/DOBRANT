@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOBRANT ドブラント</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:      #060C12;
+      --bg2:     #0B1720;
+      --teal:    #00E5B3;
+      --teal2:   #00a880;
+      --gold:    #C8A135;
+      --gold2:   #F0C84A;
+      --red:     #FF4655;
+      --red2:    #c43040;
+      --white:   #FFFFFF;
+      --gray:    #7A8FA0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Noto Sans JP', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ─── CANVAS ─── */
+    #cv {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+
+    /* ─── SCANLINES ─── */
+    .sl {
+      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom, transparent 0, transparent 3px,
+        rgba(0,0,0,.07) 3px, rgba(0,0,0,.07) 4px
+      );
+    }
+
+    /* ─── MAIN ─── */
+    main { position: relative; z-index: 1; }
+
+
+    /* ══════════════════════════════
+       HERO
+    ══════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 80px 24px 120px;
+      position: relative; overflow: hidden;
+    }
+
+    /* moving top stripe */
+    .hero-stripe {
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%, var(--teal) 20%, var(--gold2) 50%, var(--teal) 80%, transparent 100%
+      );
+      background-size: 300% 100%;
+      animation: stripeMove 2s linear infinite;
+    }
+    @keyframes stripeMove {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* animated corners */
+    .corner { position: absolute; width: 52px; height: 52px; }
+    .corner--tl { top: 24px; left: 24px; border-top: 2px solid var(--teal); border-left: 2px solid var(--teal); }
+    .corner--tr { top: 24px; right: 24px; border-top: 2px solid var(--teal); border-right: 2px solid var(--teal); }
+    .corner--bl { bottom: 24px; left: 24px; border-bottom: 2px solid var(--teal); border-left: 2px solid var(--teal); }
+    .corner--br { bottom: 24px; right: 24px; border-bottom: 2px solid var(--teal); border-right: 2px solid var(--teal); }
+    .corner--tl, .corner--tr, .corner--bl, .corner--br {
+      animation: cornerGlow 3s ease-in-out infinite;
+    }
+    .corner--tr { animation-delay: .75s; }
+    .corner--bl { animation-delay: 1.5s; }
+    .corner--br { animation-delay: 2.25s; }
+    @keyframes cornerGlow {
+      0%,100% { opacity: .4; }
+      50%      { opacity: 1; box-shadow: 0 0 16px var(--teal), 0 0 4px var(--teal); }
+    }
+
+    /* presents */
+    .presents {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(12px, 1.8vw, 15px);
+      letter-spacing: .5em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: 20px;
+      animation: fadeDown .7s ease .3s both;
+    }
+
+    /* SHOWMATCH badge */
+    .badge-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 36px;
+      animation: fadeDown .7s ease .5s both;
+    }
+    .badge-line {
+      height: 1px; width: 40px;
+      background: linear-gradient(to right, transparent, var(--gold));
+    }
+    .badge-line:last-child { background: linear-gradient(to left, transparent, var(--gold)); }
+    .badge-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(11px, 1.5vw, 13px);
+      letter-spacing: .6em; text-transform: uppercase;
+      color: var(--gold2);
+      border: 1px solid rgba(200,161,53,.4);
+      padding: 5px 24px;
+      position: relative;
+    }
+    .badge-diamond {
+      display: inline-block; width: 7px; height: 7px;
+      background: var(--gold2);
+      clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+      position: absolute; top: 50%; transform: translateY(-50%);
+      animation: spin 3s linear infinite;
+    }
+    .badge-diamond:first-child { left: -14px; }
+    .badge-diamond:last-child  { right: -14px; animation-direction: reverse; }
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+    /* TITLE */
+    .title-wrap {
+      text-align: center; margin-bottom: 28px;
+      animation: fadeDown .7s ease .7s both;
+    }
+
+    .title-en {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(72px, 17vw, 196px);
+      font-weight: 700; line-height: .85;
+      letter-spacing: .04em; text-transform: uppercase;
+      display: inline-block; position: relative;
+      background: linear-gradient(140deg, #fff 20%, var(--teal) 55%, var(--gold2) 85%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 40px rgba(0,229,179,.4));
+      animation: titleGlow 4s ease-in-out infinite;
+    }
+    @keyframes titleGlow {
+      0%,100% { filter: drop-shadow(0 0 28px rgba(0,229,179,.35)); }
+      50%      { filter: drop-shadow(0 0 60px rgba(0,229,179,.75)) drop-shadow(0 0 120px rgba(0,229,179,.2)); }
+    }
+
+    /* glitch layers */
+    .glitch-layer {
+      position: absolute; inset: 0;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: inherit; font-weight: 700;
+      line-height: .85; letter-spacing: .04em; text-transform: uppercase;
+      pointer-events: none;
+    }
+    .glitch-layer--a {
+      -webkit-text-fill-color: var(--teal);
+      clip-path: polygon(0 0, 100% 0, 100% 30%, 0 30%);
+      animation: glitchA 5s infinite;
+    }
+    .glitch-layer--b {
+      -webkit-text-fill-color: var(--red);
+      clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+      animation: glitchB 5s infinite 0.1s;
+    }
+    @keyframes glitchA {
+      0%,88%,100% { transform: translate(0); opacity: 0; }
+      89% { transform: translate(-5px,-2px); opacity: .9; }
+      90% { transform: translate(5px, 1px); opacity: .5; }
+      91% { transform: translate(-3px,0);   opacity: .9; }
+      92% { transform: translate(0);        opacity: 0; }
+    }
+    @keyframes glitchB {
+      0%,91%,100% { transform: translate(0); opacity: 0; }
+      92% { transform: translate(5px, 2px); opacity: .9; }
+      93% { transform: translate(-5px,0);   opacity: .5; }
+      94% { transform: translate(3px,-1px); opacity: .9; }
+      95% { transform: translate(0);        opacity: 0; }
+    }
+
+    .title-ja {
+      font-size: clamp(13px, 2vw, 20px); font-weight: 700;
+      color: var(--gold2); letter-spacing: .55em; margin-top: 14px;
+      animation: fadeIn 1s ease 1.2s both;
+    }
+
+    /* sub copy */
+    .sub-copy {
+      font-size: clamp(12px, 1.5vw, 15px);
+      color: var(--gray); letter-spacing: .1em; line-height: 2;
+      text-align: center; margin-bottom: 36px;
+      animation: fadeDown .7s ease .9s both;
+    }
+
+    /* team pills */
+    .pills {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 52px;
+      animation: fadeDown .7s ease 1.1s both;
+    }
+    .pill {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px; letter-spacing: .35em; text-transform: uppercase;
+      padding: 6px 18px; border-radius: 2px;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .pill:hover { transform: translateY(-2px); }
+    .pill--red  { background: rgba(255,70,85,.12); color: var(--red); border: 1px solid rgba(255,70,85,.35); }
+    .pill--red:hover  { box-shadow: 0 4px 20px rgba(255,70,85,.3); }
+    .pill--teal { background: rgba(0,229,179,.10); color: var(--teal); border: 1px solid rgba(0,229,179,.35); }
+    .pill--teal:hover { box-shadow: 0 4px 20px rgba(0,229,179,.3); }
+    .pill--gold { background: rgba(200,161,53,.10); color: var(--gold2); border: 1px solid rgba(200,161,53,.35); }
+    .pill--gold:hover { box-shadow: 0 4px 20px rgba(200,161,53,.3); }
+
+    /* countdown */
+    .cd-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px; letter-spacing: .55em; color: var(--gray);
+      text-transform: uppercase; text-align: center; margin-bottom: 12px;
+      animation: fadeDown .7s ease 1.3s both;
+    }
+    .cd-row {
+      display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center;
+      animation: fadeDown .7s ease 1.4s both;
+    }
+    .cd-box {
+      min-width: 86px; text-align: center;
+      background: rgba(0,229,179,.05);
+      border: 1px solid rgba(0,229,179,.18);
+      padding: 18px 14px 12px;
+      position: relative; overflow: hidden;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .cd-box:hover {
+      border-color: rgba(0,229,179,.5);
+      box-shadow: 0 0 24px rgba(0,229,179,.15);
+    }
+    .cd-box::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: var(--teal); opacity: .5;
+      animation: cdScan 4s linear infinite;
+    }
+    @keyframes cdScan {
+      0%   { transform: translateY(0); opacity: .5; }
+      100% { transform: translateY(100px); opacity: 0; }
+    }
+    .cd-num {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(36px, 6vw, 60px); font-weight: 700;
+      color: var(--teal); line-height: 1;
+      text-shadow: 0 0 24px rgba(0,229,179,.6);
+    }
+    .cd-unit {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px; letter-spacing: .4em; color: var(--gray);
+      text-transform: uppercase; margin-top: 4px;
+    }
+    .cd-sep {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 44px; font-weight: 700; color: var(--teal2);
+      padding-bottom: 16px; animation: blink .6s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* scroll hint */
+    .scroll-hint {
+      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      opacity: .4; animation: fadeIn 1s ease 2s both;
+    }
+    .scroll-hint span {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 9px; letter-spacing: .55em; color: var(--gray); text-transform: uppercase;
+    }
+    .sh-arrow {
+      width: 16px; height: 16px;
+      border-right: 2px solid var(--gray); border-bottom: 2px solid var(--gray);
+      transform: rotate(45deg);
+      animation: arrowBounce .7s ease-in-out infinite alternate;
+    }
+    @keyframes arrowBounce {
+      from { transform: rotate(45deg) translateY(-5px); }
+      to   { transform: rotate(45deg) translateY(5px); }
+    }
+
+
+    /* ══════════════════════════════
+       TICKER
+    ══════════════════════════════ */
+    .ticker {
+      background: var(--teal); overflow: hidden; padding: 10px 0; z-index: 2; position: relative;
+    }
+    .ticker-track {
+      display: flex; white-space: nowrap;
+      animation: tickerScroll 24s linear infinite;
+    }
+    .ticker-item {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: .3em;
+      text-transform: uppercase; color: var(--bg);
+      padding: 0 36px; display: flex; align-items: center; gap: 14px;
+    }
+    .ticker-item::after { content: '◆'; font-size: 7px; }
+    @keyframes tickerScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+
+    /* ══════════════════════════════
+       SECTIONS COMMON
+    ══════════════════════════════ */
+    section { padding: 88px 24px; }
+
+    .sec-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px; letter-spacing: .6em; color: var(--teal);
+      text-transform: uppercase;
+      display: flex; align-items: center; gap: 18px; margin-bottom: 16px;
+    }
+    .sec-label::before { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--teal2)); }
+    .sec-label::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(to left,  transparent, var(--teal2)); }
+
+    .sec-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(28px, 5vw, 52px); font-weight: 700;
+      letter-spacing: .08em; text-align: center; text-transform: uppercase;
+      margin-bottom: 60px;
+    }
+
+    /* scroll reveal */
+    .rv {
+      opacity: 0; transform: translateY(36px);
+      transition: opacity .65s ease, transform .65s ease;
+    }
+    .rv.on { opacity: 1; transform: translateY(0); }
+    .d1 { transition-delay: .1s; } .d2 { transition-delay: .2s; }
+    .d3 { transition-delay: .3s; } .d4 { transition-delay: .4s; }
+    .d5 { transition-delay: .5s; }
+
+
+    /* ══════════════════════════════
+       ABOUT
+    ══════════════════════════════ */
+    .about-sec { background: var(--bg2); }
+    .about-inner { max-width: 680px; margin: 0 auto; text-align: center; }
+    .about-copy {
+      font-size: clamp(14px, 2vw, 17px); line-height: 2.4; color: #b8c8d8;
+    }
+    .ht { color: var(--teal);  font-weight: 700; }
+    .hg { color: var(--gold2); font-weight: 700; }
+    .hr { color: var(--red);   font-weight: 700; }
+
+
+    /* ══════════════════════════════
+       INFO BAR
+    ══════════════════════════════ */
+    .info-bar {
+      background: var(--bg);
+      border-top: 1px solid rgba(0,229,179,.12);
+      border-bottom: 1px solid rgba(0,229,179,.12);
+      padding: 44px 24px;
+    }
+    .info-list {
+      max-width: 920px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 52px;
+    }
+    .info-item { text-align: center; }
+    .info-lbl {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px; letter-spacing: .5em; color: var(--teal);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .info-val {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(18px, 2.5vw, 28px); font-weight: 700;
+      color: var(--white); letter-spacing: .06em;
+    }
+    .info-val small { font-size: .5em; color: var(--gray); letter-spacing: .2em; }
+
+
+    /* ══════════════════════════════
+       MATCHUP
+    ══════════════════════════════ */
+    .matchup-sec { background: var(--bg2); }
+
+    .match-grid {
+      max-width: 1200px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0;
+    }
+
+    /* team panel */
+    .tp {
+      padding: 40px 36px;
+      position: relative; overflow: hidden;
+    }
+    .tp-a {
+      background: linear-gradient(145deg, rgba(255,70,85,.07) 0%, transparent 65%);
+      border: 1px solid rgba(255,70,85,.2);
+      border-right: none;
+    }
+    .tp-b {
+      background: linear-gradient(225deg, rgba(0,229,179,.07) 0%, transparent 65%);
+      border: 1px solid rgba(0,229,179,.2);
+      border-left: none;
+    }
+
+    /* animated sweep line on panel */
+    .tp::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 100%; height: 2px;
+      animation: sweep 4s ease-in-out infinite;
+    }
+    .tp-a::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+    .tp-b::before { background: linear-gradient(90deg, transparent, var(--teal), transparent); animation-delay: 2s; }
+    @keyframes sweep { 0%,45% { left: -100%; } 55%,100% { left: 100%; } }
+
+    .tp-tag {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px; letter-spacing: .55em; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .tp-a .tp-tag { color: var(--red); }
+    .tp-b .tp-tag { color: var(--teal); }
+
+    .tp-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(26px, 3.5vw, 42px); font-weight: 700;
+      line-height: 1; margin-bottom: 10px;
+    }
+    .tp-a .tp-name { color: var(--red); }
+    .tp-b .tp-name { color: var(--teal); }
+
+    .tp-desc {
+      font-size: 13px; color: var(--gray); margin-bottom: 32px; line-height: 1.9;
+    }
+
+    /* player cards */
+    .p-cards { display: flex; flex-wrap: wrap; gap: 14px; }
+
+    .pc {
+      width: 104px;
+      border: 1px solid;
+      position: relative; overflow: hidden;
+      cursor: default;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+    }
+    .tp-a .pc { border-color: rgba(255,70,85,.3); background: rgba(255,70,85,.04); }
+    .tp-b .pc { border-color: rgba(0,229,179,.3); background: rgba(0,229,179,.04); }
+    .pc:hover { transform: translateY(-8px) scale(1.04); }
+    .tp-a .pc:hover { box-shadow: 0 12px 40px rgba(255,70,85,.35), 0 0 0 1px rgba(255,70,85,.6); }
+    .tp-b .pc:hover { box-shadow: 0 12px 40px rgba(0,229,179,.35), 0 0 0 1px rgba(0,229,179,.6); }
+
+    .pc-top { height: 3px; }
+    .tp-a .pc-top { background: linear-gradient(90deg, var(--red2), var(--red)); }
+    .tp-b .pc-top { background: linear-gradient(90deg, var(--teal2), var(--teal)); }
+
+    .pc-body {
+      padding: 12px 8px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+
+    .pc-ava {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; border: 1px solid;
+      transition: box-shadow .3s;
+    }
+    .tp-a .pc-ava { border-color: rgba(255,70,85,.3); background: rgba(255,70,85,.08); }
+    .tp-b .pc-ava { border-color: rgba(0,229,179,.3); background: rgba(0,229,179,.08); }
+    .pc:hover .pc-ava { box-shadow: 0 0 16px currentColor; }
+    .tp-a .pc:hover .pc-ava { box-shadow: 0 0 16px var(--red); }
+    .tp-b .pc:hover .pc-ava { box-shadow: 0 0 16px var(--teal); }
+
+    .pc-name {
+      font-size: 10px; font-weight: 700;
+      text-align: center; line-height: 1.5; letter-spacing: .02em;
+    }
+    .tp-a .pc-name { color: #ffd0d4; }
+    .tp-b .pc-name { color: #a8fff0; }
+
+    .pc-num {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 9px; letter-spacing: .25em; opacity: .35; margin-top: -2px;
+    }
+
+    /* card shimmer */
+    .pc::after {
+      content: '';
+      position: absolute; top: -100%; left: 0; right: 0; height: 70%;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,.04), transparent);
+      animation: pcShimmer 4s ease-in-out infinite;
+      animation-delay: calc(var(--i, 0) * .4s);
+    }
+    @keyframes pcShimmer { 0% { top: -70%; } 100% { top: 150%; } }
+
+    /* VS */
+    .vs-col {
+      display: flex; align-items: center; justify-content: center; padding: 0 24px;
+      position: relative;
+    }
+    /* energy bolt */
+    .vs-col::before {
+      content: '';
+      position: absolute; top: 0; bottom: 0;
+      left: 50%; transform: translateX(-50%);
+      width: 1px;
+      background: linear-gradient(to bottom,
+        transparent 0%, rgba(200,161,53,.3) 20%, rgba(200,161,53,.6) 50%, rgba(200,161,53,.3) 80%, transparent 100%
+      );
+      animation: vsLine 2s ease-in-out infinite;
+    }
+    @keyframes vsLine { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+    .vs-badge {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(36px, 5vw, 64px); font-weight: 700;
+      color: var(--bg); background: var(--gold2);
+      padding: 20px 22px; line-height: 1;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+      animation: vsPulse 2.2s ease-in-out infinite;
+      position: relative; z-index: 1;
+    }
+    @keyframes vsPulse {
+      0%,100% {
+        box-shadow: 0 0 24px rgba(240,200,74,.5);
+        filter: brightness(1);
+      }
+      50% {
+        box-shadow: 0 0 50px rgba(240,200,74,.8), 0 0 100px rgba(240,200,74,.3);
+        filter: brightness(1.15);
+      }
+    }
+
+
+    /* ══════════════════════════════
+       RULES
+    ══════════════════════════════ */
+    .rules-sec { background: var(--bg); }
+
+    .rules-grid {
+      max-width: 960px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .rc {
+      border: 1px solid rgba(200,161,53,.18);
+      background: linear-gradient(150deg, rgba(200,161,53,.05) 0%, transparent 55%);
+      padding: 28px 24px 24px;
+      position: relative; overflow: hidden;
+      transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+    }
+    .rc:hover {
+      transform: translateY(-5px);
+      border-color: rgba(200,161,53,.5);
+      box-shadow: 0 10px 40px rgba(200,161,53,.12);
+    }
+    .rc--t {
+      border-color: rgba(0,229,179,.18);
+      background: linear-gradient(150deg, rgba(0,229,179,.05) 0%, transparent 55%);
+    }
+    .rc--t:hover {
+      border-color: rgba(0,229,179,.5);
+      box-shadow: 0 10px 40px rgba(0,229,179,.12);
+    }
+
+    /* draw-in left border */
+    .rc::before {
+      content: '';
+      position: absolute; top: 0; left: 0; width: 2px; height: 0;
+      background: var(--gold); transition: height .5s ease;
+    }
+    .rc--t::before { background: var(--teal); }
+    .rc:hover::before { height: 100%; }
+
+    /* shine sweep */
+    .rc::after {
+      content: '';
+      position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent);
+      transition: left .5s ease;
+    }
+    .rc:hover::after { left: 130%; }
+
+    .rc-num {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 54px; font-weight: 700;
+      position: absolute; top: 6px; right: 12px; line-height: 1;
+      color: rgba(200,161,53,.09);
+    }
+    .rc--t .rc-num { color: rgba(0,229,179,.09); }
+
+    .rc-icon { font-size: 32px; margin-bottom: 14px; }
+    .rc-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px; font-weight: 700; letter-spacing: .2em;
+      color: var(--gold2); text-transform: uppercase; margin-bottom: 10px;
+    }
+    .rc--t .rc-title { color: var(--teal); }
+    .rc-body { font-size: 13px; color: var(--gray); line-height: 1.9; }
+    .rc-body strong { color: var(--white); }
+
+
+    /* ══════════════════════════════
+       FOOTER
+    ══════════════════════════════ */
+    footer {
+      padding: 52px 24px; text-align: center;
+      background: var(--bg);
+      border-top: 1px solid rgba(255,255,255,.04);
+      position: relative; z-index: 1;
+    }
+    .ft-by {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px; letter-spacing: .55em; color: var(--teal2);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .ft-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 32px; font-weight: 700; letter-spacing: .12em;
+      background: linear-gradient(135deg, #fff, var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 16px;
+    }
+    .ft-copy { font-size: 12px; color: var(--gray); letter-spacing: .15em; }
+
+
+    /* ══════════════════════════════
+       KEYFRAMES
+    ══════════════════════════════ */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+
+    /* ══════════════════════════════
+       PLAYER SHOWCASE 16:9
+    ══════════════════════════════ */
+    .sc-sec { background: var(--bg); padding: 0; }
+
+    .sc-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background:
+        radial-gradient(ellipse 55% 90% at 12% 50%, rgba(0,229,179,.08) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 90% at 88% 50%, rgba(200,161,53,.06) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 110%, rgba(255,70,85,.05) 0%, transparent 60%),
+        linear-gradient(180deg, #060C14 0%, #0C1A26 45%, #060C14 100%);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between;
+      padding: 2.5% 5% 3.5%;
+    }
+
+    /* diagonal grid overlay */
+    .sc-wrap::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,229,179,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,179,.025) 1px, transparent 1px);
+      background-size: 6.25% 11.1%;
+    }
+
+    /* corner brackets */
+    .sc-c { position: absolute; width: 4%; aspect-ratio: 1; }
+    .sc-c--tl { top: 4%; left: 3%;  border-top: 2px solid var(--teal); border-left: 2px solid var(--teal); }
+    .sc-c--tr { top: 4%; right: 3%; border-top: 2px solid var(--teal); border-right: 2px solid var(--teal); }
+    .sc-c--bl { bottom: 4%; left: 3%;  border-bottom: 2px solid var(--teal); border-left: 2px solid var(--teal); }
+    .sc-c--br { bottom: 4%; right: 3%; border-bottom: 2px solid var(--teal); border-right: 2px solid var(--teal); }
+    .sc-c--tl,.sc-c--tr,.sc-c--bl,.sc-c--br { animation: cornerGlow 3s ease-in-out infinite; }
+    .sc-c--tr { animation-delay: .75s; } .sc-c--bl { animation-delay: 1.5s; } .sc-c--br { animation-delay: 2.25s; }
+
+    /* top info bar */
+    .sc-top {
+      width: 100%; display: flex; justify-content: center; align-items: center;
+      gap: 1.5%; z-index: 1;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(7px, .9vw, 14px);
+      letter-spacing: .45em; text-transform: uppercase; color: var(--teal2);
+    }
+    .sc-top-d { width: 1px; height: .9em; background: rgba(0,229,179,.3); }
+    .sc-top-ev { color: var(--white); font-weight: 700; }
+
+    /* team name */
+    .sc-tname {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(10px, 2.2vw, 36px);
+      font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--gold2);
+      text-shadow: 0 0 2vw rgba(240,200,74,.45);
+      z-index: 1; line-height: 1;
+    }
+    .sc-tname small {
+      display: block;
+      font-size: .45em; letter-spacing: .55em; color: var(--teal); margin-top: .3em;
+    }
+
+    /* cards row */
+    .sc-cards {
+      display: flex; gap: 1.4%;
+      justify-content: center; align-items: stretch;
+      width: 90%; flex: 1; margin: 1.5% 0;
+      z-index: 1;
+    }
+
+    .sc-card {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+      border: 2px solid var(--gold);
+      background: rgba(0,0,0,.45);
+      overflow: hidden; position: relative;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+      cursor: default;
+      opacity: 0; transform: translateY(12%);
+    }
+    .sc-card.on {
+      opacity: 1; transform: translateY(0);
+      transition: opacity .55s ease, transform .55s cubic-bezier(.34,1.56,.64,1),
+                  box-shadow .3s ease;
+    }
+    .sc-card:nth-child(1).on { transition-delay: .05s; }
+    .sc-card:nth-child(2).on { transition-delay: .15s; }
+    .sc-card:nth-child(3).on { transition-delay: .25s; }
+    .sc-card:nth-child(4).on { transition-delay: .35s; }
+    .sc-card:nth-child(5).on { transition-delay: .45s; }
+
+    .sc-card:hover {
+      transform: translateY(-3%) scale(1.04);
+      box-shadow: 0 4% 5% rgba(200,161,53,.45), 0 0 0 1px var(--gold2);
+      z-index: 5;
+    }
+
+    /* inner corner marks */
+    .sc-card::before {
+      content: '';
+      position: absolute; top: 5px; left: 5px; z-index: 3;
+      width: 10px; height: 10px;
+      border-top: 1px solid var(--gold2); border-left: 1px solid var(--gold2);
+    }
+    .sc-card::after {
+      content: '';
+      position: absolute; bottom: calc(2.5em + 5px); right: 5px; z-index: 3;
+      width: 10px; height: 10px;
+      border-bottom: 1px solid var(--gold2); border-right: 1px solid var(--gold2);
+    }
+
+    .sc-card img {
+      width: 100%; flex: 1; min-height: 0;
+      object-fit: cover; object-position: center top;
+      display: block;
+      filter: brightness(.88) saturate(1.1);
+      transition: filter .35s ease;
+    }
+    .sc-card:hover img { filter: brightness(1.02) saturate(1.2); }
+
+    .sc-name {
+      background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+      color: var(--bg);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 900; text-align: center;
+      padding: 5% 4%;
+      font-size: clamp(7px, 1vw, 16px);
+      letter-spacing: .03em; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      position: relative; z-index: 2;
+    }
+
+    /* player number */
+    .sc-num {
+      position: absolute; top: 5px; right: 7px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(6px, .75vw, 12px);
+      color: rgba(240,200,74,.7); letter-spacing: .1em; z-index: 4;
+    }
+
+    /* hover glow overlay */
+    .sc-card-glow {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: linear-gradient(180deg, transparent 60%, rgba(200,161,53,.12) 100%);
+      opacity: 0; transition: opacity .3s;
+    }
+    .sc-card:hover .sc-card-glow { opacity: 1; }
+
+    /* ══════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════ */
+    @media (max-width: 760px) {
+      .match-grid { grid-template-columns: 1fr; }
+      .vs-col { padding: 24px; }
+      .vs-col::before { display: none; }
+      .tp { border: 1px solid; }
+      .tp-a { border-color: rgba(255,70,85,.2); }
+      .tp-b { border-color: rgba(0,229,179,.2); }
+      .cd-box { min-width: 70px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="cv"></canvas>
+  <div class="sl"></div>
+
+  <main>
+
+    <!-- ══ HERO ══ -->
+    <section class="hero">
+      <div class="hero-stripe"></div>
+      <div class="corner corner--tl"></div>
+      <div class="corner corner--tr"></div>
+      <div class="corner corner--bl"></div>
+      <div class="corner corner--br"></div>
+
+      <p class="presents">PRESENTS BY ゆぅたんこぶ</p>
+
+      <div class="badge-row">
+        <div class="badge-line"></div>
+        <div class="badge-text">
+          <span class="badge-diamond"></span>
+          VALORANT SHOWMATCH
+          <span class="badge-diamond"></span>
+        </div>
+        <div class="badge-line"></div>
+      </div>
+
+      <div class="title-wrap">
+        <div class="title-en">
+          DOBRANT
+          <span class="glitch-layer glitch-layer--a">DOBRANT</span>
+          <span class="glitch-layer glitch-layer--b">DOBRANT</span>
+        </div>
+        <div class="title-ja">ド ブ ラ ン ト</div>
+      </div>
+
+      <p class="sub-copy">
+        ドブ（下手）× ヴァララント ＝ <strong style="color:var(--white)">ドブラント</strong>
+      </p>
+
+      <div class="pills">
+        <span class="pill pill--red">初心者チーム × 5</span>
+        <span class="pill pill--gold">v s</span>
+        <span class="pill pill--teal">経験者チーム × 4</span>
+      </div>
+
+      <p class="cd-label">EVENT STARTS IN</p>
+      <div class="cd-row">
+        <div class="cd-box">
+          <div class="cd-num" id="cdD">--</div>
+          <div class="cd-unit">DAYS</div>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box">
+          <div class="cd-num" id="cdH">--</div>
+          <div class="cd-unit">HOURS</div>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box">
+          <div class="cd-num" id="cdM">--</div>
+          <div class="cd-unit">MINS</div>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box">
+          <div class="cd-num" id="cdS">--</div>
+          <div class="cd-unit">SECS</div>
+        </div>
+      </div>
+
+      <div class="scroll-hint">
+        <span>SCROLL</span>
+        <div class="sh-arrow"></div>
+      </div>
+    </section>
+
+    <!-- ══ TICKER ══ -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span class="ticker-item">DOBRANT</span><span class="ticker-item">ドブラント</span>
+        <span class="ticker-item">2026.04.26</span><span class="ticker-item">5 VS 4</span>
+        <span class="ticker-item">VALORANT SHOWMATCH</span>
+        <span class="ticker-item">PRESENTS BY ゆぅたんこぶ</span>
+        <span class="ticker-item">NO CROSSHAIR · NO UI · NO SOUND</span>
+        <span class="ticker-item">ドブって楽しもう</span>
+        <!-- duplicate for seamless loop -->
+        <span class="ticker-item">DOBRANT</span><span class="ticker-item">ドブラント</span>
+        <span class="ticker-item">2026.04.26</span><span class="ticker-item">5 VS 4</span>
+        <span class="ticker-item">VALORANT SHOWMATCH</span>
+        <span class="ticker-item">PRESENTS BY ゆぅたんこぶ</span>
+        <span class="ticker-item">NO CROSSHAIR · NO UI · NO SOUND</span>
+        <span class="ticker-item">ドブって楽しもう</span>
+      </div>
+    </div>
+
+    <!-- ══ PLAYER SHOWCASE 16:9 ══ -->
+    <section class="sc-sec">
+      <div class="sc-wrap">
+        <!-- corners -->
+        <div class="sc-c sc-c--tl"></div>
+        <div class="sc-c sc-c--tr"></div>
+        <div class="sc-c sc-c--bl"></div>
+        <div class="sc-c sc-c--br"></div>
+
+        <!-- top bar -->
+        <div class="sc-top">
+          <span class="sc-top-ev">DOBRANT ドブラント</span>
+          <div class="sc-top-d"></div>
+          <span>VALORANT SHOWMATCH</span>
+          <div class="sc-top-d"></div>
+          <span>2026.04.26 [SUN]</span>
+          <div class="sc-top-d"></div>
+          <span>PRESENTS BY ゆぅたんこぶ</span>
+        </div>
+
+        <!-- 5 player cards -->
+        <div class="sc-cards">
+          <div class="sc-card rv">
+            <div class="sc-num">No.01</div>
+            <div class="sc-card-glow"></div>
+            <img src="img/p1.jpg" alt="じぇしかべいびー" />
+            <div class="sc-name">じぇしかべいびー</div>
+          </div>
+          <div class="sc-card rv">
+            <div class="sc-num">No.02</div>
+            <div class="sc-card-glow"></div>
+            <img src="img/p2.jpg" alt="みるくぼーい" />
+            <div class="sc-name">みるくぼーい</div>
+          </div>
+          <div class="sc-card rv">
+            <div class="sc-num">No.03</div>
+            <div class="sc-card-glow"></div>
+            <img src="img/p3.jpg" alt="しゅがー" />
+            <div class="sc-name">しゅがー</div>
+          </div>
+          <div class="sc-card rv">
+            <div class="sc-num">No.04</div>
+            <div class="sc-card-glow"></div>
+            <img src="img/p4.jpg" alt="はしだ" />
+            <div class="sc-name">はしだ</div>
+          </div>
+          <div class="sc-card rv">
+            <div class="sc-num">No.05</div>
+            <div class="sc-card-glow"></div>
+            <img src="img/p5.jpg" alt="てるき" />
+            <div class="sc-name">てるき</div>
+          </div>
+        </div>
+
+        <!-- team name -->
+        <div class="sc-tname">
+          TEAM 初心者チーム
+          <small>DOBRANT ドブラント · 初心者 5人</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT removed per request -->
+
+    <!-- ══ INFO BAR ══ -->
+    <div class="info-bar">
+      <div class="info-list">
+        <div class="info-item rv d1">
+          <div class="info-lbl">Event</div>
+          <div class="info-val">DOBRANT <small>ドブラント</small></div>
+        </div>
+        <div class="info-item rv d2">
+          <div class="info-lbl">Date</div>
+          <div class="info-val">2026.04.26 <small>[SUN]</small></div>
+        </div>
+        <div class="info-item rv d3">
+          <div class="info-lbl">Format</div>
+          <div class="info-val">5 <small>VS</small> 4</div>
+        </div>
+        <div class="info-item rv d4">
+          <div class="info-lbl">Game</div>
+          <div class="info-val">VALORANT</div>
+        </div>
+        <div class="info-item rv d5">
+          <div class="info-lbl">Presents</div>
+          <div class="info-val">ゆぅたんこぶ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MATCHUP ══ -->
+    <section class="matchup-sec">
+      <div class="sec-label">MATCHUP</div>
+      <h2 class="sec-title" style="color:var(--white)">THE BATTLE</h2>
+
+      <div class="match-grid">
+
+        <!-- TEAM A -->
+        <div class="tp tp-a rv">
+          <div class="tp-tag">TEAM A · ドブ CHALLENGERS</div>
+          <div class="tp-name">初心者チーム</div>
+          
+
+          <div class="p-cards">
+            <div class="pc rv d1" style="--i:0">
+              <div class="pc-top"></div>
+              <img src="img/p1.jpg" alt="じぇしかべいびー" style="width:100%;height:80px;object-fit:cover;object-position:center top;display:block;" />
+              <div class="pc-body" style="padding:6px 4px 8px;">
+                <div class="pc-name">じぇしか<br>べいびー</div>
+                <div class="pc-num">No.01</div>
+              </div>
+            </div>
+            <div class="pc rv d2" style="--i:1">
+              <div class="pc-top"></div>
+              <img src="img/p2.jpg" alt="みるくぼーい" style="width:100%;height:80px;object-fit:cover;object-position:center top;display:block;" />
+              <div class="pc-body" style="padding:6px 4px 8px;">
+                <div class="pc-name">みるく<br>ぼーい</div>
+                <div class="pc-num">No.02</div>
+              </div>
+            </div>
+            <div class="pc rv d3" style="--i:2">
+              <div class="pc-top"></div>
+              <img src="img/p3.jpg" alt="しゅがー" style="width:100%;height:80px;object-fit:cover;object-position:center top;display:block;" />
+              <div class="pc-body" style="padding:6px 4px 8px;">
+                <div class="pc-name">しゅがー</div>
+                <div class="pc-num">No.03</div>
+              </div>
+            </div>
+            <div class="pc rv d4" style="--i:3">
+              <div class="pc-top"></div>
+              <img src="img/p4.jpg" alt="はしだ" style="width:100%;height:80px;object-fit:cover;object-position:center top;display:block;" />
+              <div class="pc-body" style="padding:6px 4px 8px;">
+                <div class="pc-name">はしだ</div>
+                <div class="pc-num">No.04</div>
+              </div>
+            </div>
+            <div class="pc rv d5" style="--i:4">
+              <div class="pc-top"></div>
+              <img src="img/p5.jpg" alt="てるき" style="width:100%;height:80px;object-fit:cover;object-position:center top;display:block;" />
+              <div class="pc-body" style="padding:6px 4px 8px;">
+                <div class="pc-name">てるき</div>
+                <div class="pc-num">No.05</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VS -->
+        <div class="vs-col">
+          <div class="vs-badge">VS</div>
+        </div>
+
+        <!-- TEAM B -->
+        <div class="tp tp-b rv">
+          <div class="tp-tag">TEAM B · DEFENDERS</div>
+          <div class="tp-name">経験者チーム</div>
+
+
+          <div class="p-cards">
+            <div class="pc rv d1" style="--i:0">
+              <div class="pc-top"></div>
+              <div class="pc-body">
+                <div class="pc-ava">❓</div>
+                <div class="pc-name">???</div>
+                <div class="pc-num">No.01</div>
+              </div>
+            </div>
+            <div class="pc rv d2" style="--i:1">
+              <div class="pc-top"></div>
+              <div class="pc-body">
+                <div class="pc-ava">❓</div>
+                <div class="pc-name">???</div>
+                <div class="pc-num">No.02</div>
+              </div>
+            </div>
+            <div class="pc rv d3" style="--i:2">
+              <div class="pc-top"></div>
+              <div class="pc-body">
+                <div class="pc-ava">❓</div>
+                <div class="pc-name">???</div>
+                <div class="pc-num">No.03</div>
+              </div>
+            </div>
+            <div class="pc rv d4" style="--i:3">
+              <div class="pc-top"></div>
+              <div class="pc-body">
+                <div class="pc-ava">❓</div>
+                <div class="pc-name">???</div>
+                <div class="pc-num">No.04</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RULES removed per request -->
+
+  </main>
+
+  <footer>
+    <div class="ft-by">PRESENTS BY</div>
+    <div class="ft-name">ゆぅたんこぶ</div>
+    <div class="ft-copy">DOBRANT ドブラント &nbsp;|&nbsp; 2026.04.26 [SUN] &nbsp;|&nbsp; VALORANT SHOWMATCH</div>
+  </footer>
+
+  <script>
+  /* ─────────────────────────────────────────────
+     PARTICLE CANVAS
+  ───────────────────────────────────────────── */
+  (function() {
+    const cv = document.getElementById('cv');
+    const cx = cv.getContext('2d');
+    let W, H;
+    const COLORS = [
+      [0,229,179], [200,161,53], [255,70,85], [255,255,255]
+    ];
+    const PS = [];
+
+    function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+    addEventListener('resize', resize); resize();
+
+    class P {
+      constructor(scattered) {
+        this.reset(scattered);
+      }
+      reset(scattered) {
+        this.x  = Math.random() * W;
+        this.y  = scattered ? Math.random() * H : H + 10;
+        this.vx = (Math.random() - .5) * .5;
+        this.vy = -(Math.random() * .6 + .1);
+        this.r  = Math.random() * 2.2 + .4;
+        this.a  = Math.random() * .45 + .05;
+        this.life = 1;
+        this.fade = Math.random() * .004 + .001;
+        const c = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.clr = `rgba(${c[0]},${c[1]},${c[2]},`;
+        this.shape = Math.random() > .75 ? 'tri' : Math.random() > .5 ? 'sq' : 'circ';
+        this.ang = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - .5) * .04;
+      }
+      step() {
+        this.x += this.vx; this.y += this.vy;
+        this.life -= this.fade;
+        this.ang  += this.spin;
+        if (this.life <= 0 || this.y < -20) this.reset(false);
+      }
+      draw() {
+        const op = this.life * this.a;
+        cx.save();
+        cx.globalAlpha = op;
+        cx.fillStyle   = this.clr + op + ')';
+        cx.translate(this.x, this.y);
+        cx.rotate(this.ang);
+        if (this.shape === 'circ') {
+          cx.beginPath(); cx.arc(0, 0, this.r, 0, Math.PI*2); cx.fill();
+        } else if (this.shape === 'tri') {
+          const s = this.r * 3;
+          cx.beginPath(); cx.moveTo(0,-s); cx.lineTo(s,s); cx.lineTo(-s,s); cx.closePath(); cx.fill();
+        } else {
+          const s = this.r * 2;
+          cx.fillRect(-s/2, -s/2, s, s);
+        }
+        cx.restore();
+      }
+    }
+
+    for (let i = 0; i < 140; i++) PS.push(new P(true));
+
+    function loop() {
+      cx.clearRect(0, 0, W, H);
+      PS.forEach(p => { p.step(); p.draw(); });
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+
+  /* ─────────────────────────────────────────────
+     COUNTDOWN
+  ───────────────────────────────────────────── */
+  (function() {
+    const target = new Date('2026-04-26T21:00:00+09:00').getTime();
+    const els = {
+      d: document.getElementById('cdD'),
+      h: document.getElementById('cdH'),
+      m: document.getElementById('cdM'),
+      s: document.getElementById('cdS')
+    };
+    const pad = n => String(n).padStart(2,'0');
+
+    function tick() {
+      let diff = Math.max(0, target - Date.now());
+      const d = Math.floor(diff / 86400000); diff %= 86400000;
+      const h = Math.floor(diff / 3600000);  diff %= 3600000;
+      const m = Math.floor(diff / 60000);    diff %= 60000;
+      const s = Math.floor(diff / 1000);
+
+      if (els.s.textContent !== pad(s)) {
+        // flash on change
+        els.s.style.color = '#fff';
+        setTimeout(() => { els.s.style.color = ''; }, 100);
+      }
+      els.d.textContent = pad(d);
+      els.h.textContent = pad(h);
+      els.m.textContent = pad(m);
+      els.s.textContent = pad(s);
+    }
+    tick(); setInterval(tick, 1000);
+  })();
+
+  /* ─────────────────────────────────────────────
+     SCROLL REVEAL
+  ───────────────────────────────────────────── */
+  (function() {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.rv, .sc-card').forEach(el => obs.observe(el));
+  })();
+
+  /* ─────────────────────────────────────────────
+     RANDOM GLITCH FLASH
+  ───────────────────────────────────────────── */
+  (function() {
+    setInterval(() => {
+      if (Math.random() > .65) {
+        const el = document.body;
+        el.style.filter = 'hue-rotate(15deg) brightness(1.04) saturate(1.2)';
+        setTimeout(() => { el.style.filter = ''; }, 60);
+        if (Math.random() > .8) {
+          setTimeout(() => {
+            el.style.filter = 'hue-rotate(-10deg) brightness(.98)';
+            setTimeout(() => { el.style.filter = ''; }, 40);
+          }, 90);
+        }
+      }
+    }, 2800);
+  })();
+
+  /* ─────────────────────────────────────────────
+     TEXT SCRAMBLE on section titles
+  ───────────────────────────────────────────── */
+  (function() {
+    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+    function scramble(el) {
+      const original = el.dataset.text || el.textContent;
+      el.dataset.text = original;
+      let frame = 0;
+      const totalFrames = 18;
+      const id = setInterval(() => {
+        el.textContent = original.split('').map((c, i) => {
+          if (c === ' ') return ' ';
+          if (frame / totalFrames > i / original.length) return c;
+          return CHARS[Math.floor(Math.random() * CHARS.length)];
+        }).join('');
+        frame++;
+        if (frame > totalFrames) { el.textContent = original; clearInterval(id); }
+      }, 40);
+    }
+
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          scramble(e.target);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.sec-title').forEach(el => obs.observe(el));
+  })();
+  </script>
+</body>
+</html>
